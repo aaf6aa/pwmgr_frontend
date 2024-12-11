@@ -9,8 +9,6 @@ import Navbar from './components/common/Navbar';
 import { setAuthToken } from './services/api';
 import { useIdleTimer } from "react-idle-timer";
 
-import LogoutIcon from '@mui/icons-material/Logout'
-
 const AppRoutes: React.FC = () => {
   const { token, logout } = useContext(AuthContext);
 
@@ -25,7 +23,7 @@ const AppRoutes: React.FC = () => {
       if (token)
       {
         logout();
-        setTimeout("alert('You have been logged out due to inactivity.')", 1); // Non-blocking alert
+        setTimeout(function() { alert('You have been logged out due to inactivity.') }, 1); // Non-blocking alert
       }
     },
     debounce: 500

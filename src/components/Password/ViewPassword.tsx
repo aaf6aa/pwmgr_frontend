@@ -57,7 +57,7 @@ const ViewPassword: React.FC<{ id: string, setOpen: Dispatch<SetStateAction<bool
     if (id && masterKey) {
       fetchPassword();
     }
-  }, [id, masterKey]);
+  }, [id, masterKey, metadataKey]);
 
   return (
     <div className="max-w-md mx-auto p-10 bg-white shadow-md rounded-xl">

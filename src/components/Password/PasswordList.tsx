@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useContext, ComponentType  } from 'react';
+import React, { useEffect, useState, useContext  } from 'react';
 import AddPassword from "./AddPassword"
 import ViewPassword from "./ViewPassword"
 import { getPasswordMetadata, deleteEncryptedPasswordById } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { decryptAESGCM, ab2str, base642ab } from '../../services/crypto';
 import { PasswordMetadata } from '../../utils/types';
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -14,40 +14,10 @@ import DeleteIcon from '@mui/icons-material/Delete'
 const PasswordList: React.FC = () => {
   const { token, metadataKey, passwords } = useContext(AuthContext);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null)
-
-  const fetchMetadata = async () => {
-    setError(null);
-    try {
-      const response = await getPasswordMetadata();
-      const encryptedMetadataList = response.data;
-
-      for (const encryptedMetadata of encryptedMetadataList) {
-        // Decrypt metadata using metadata key
-        try
-        {
-          const decryptedMetadata = JSON.parse(ab2str(await decryptAESGCM(metadataKey!, base642ab(encryptedMetadata.encryptedMetadata))));
-          const metadata: PasswordMetadata = {
-            id: encryptedMetadata.id,
-            service: decryptedMetadata.service,
-            username: decryptedMetadata.username,
-          }
-          passwords.set(metadata.id, metadata);
-        } catch (error: any) {
-          console.error('Failed to decrypt password metadata for ', encryptedMetadata.id, error);
-        }
-      }
-      setLoading(false);
-    } catch (error: any) {
-      console.error('Failed to fetch password metadata', error);
-      setError('Failed to fetch passwords.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const deletePassword = async (id: string) => {
     setError(null);
@@ -65,10 +35,40 @@ const PasswordList: React.FC = () => {
   }
 
   useEffect(() => {
+    const fetchMetadata = async () => {
+      setError(null);
+      try {
+        const response = await getPasswordMetadata();
+        const encryptedMetadataList = response.data;
+  
+        for (const encryptedMetadata of encryptedMetadataList) {
+          // Decrypt metadata using metadata key
+          try
+          {
+            const decryptedMetadata = JSON.parse(ab2str(await decryptAESGCM(metadataKey!, base642ab(encryptedMetadata.encryptedMetadata))));
+            const metadata: PasswordMetadata = {
+              id: encryptedMetadata.id,
+              service: decryptedMetadata.service,
+              username: decryptedMetadata.username,
+            }
+            passwords.set(metadata.id, metadata);
+          } catch (error: any) {
+            console.error('Failed to decrypt password metadata for ', encryptedMetadata.id, error);
+          }
+        }
+        setLoading(false);
+      } catch (error: any) {
+        console.error('Failed to fetch password metadata', error);
+        setError('Failed to fetch passwords.');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
     if (token && metadataKey) {
       fetchMetadata();
     }
-  }, [token, metadataKey]);
+  }, [token, metadataKey, passwords]);
 
   if (error) {
     return <div className="p-6 text-red-500">{error}</div>;
