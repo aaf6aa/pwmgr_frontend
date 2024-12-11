@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start App",
+        "type": "npm",
+        "script": "start",
+        "group": "build",
+        "isBackground": true,
+        "problemMatcher": {
+          "owner": "custom",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": [
+            {
+              "regexp": ".",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Starting the development server...",
+            "endsPattern": "Compiled successfully."
+          }
+        }
+      }
+    ]
+  }
+  
