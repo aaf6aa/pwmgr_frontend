@@ -5,6 +5,7 @@ import { ab2base64, deriveKeyHKDF, encryptAESGCM, generateSalt, str2ab } from '.
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({ setOpen }) => {
   const { masterKey, metadataKey, passwords } = useContext(AuthContext);
@@ -13,6 +14,19 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
   const [password, setPassword] = useState('');
   const [disable, setDisable] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const generateSecurePassword = () => {
+    const length = 14;
+    const charset = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$&*_+:?';
+    const array = new Uint8Array(length);
+    window.crypto.getRandomValues(array);
+    
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset[array[i] % charset.length];
+    }
+    setPassword(password);
+  };
 
   const handleAddPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,14 +111,24 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
         </div>
         <div className="mb-8">
           <label className="block text-gray-700 mb-2">Password</label>
-          <input
-            type="password"
-            className="w-full px-3 py-2 border rounded-lg"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={disable}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={disable}
+            />
+            <button
+              type="button"
+              onClick={generateSecurePassword}
+              disabled={disable}
+              className="text-amber-500 hover:text-amber-800"
+            >
+              <AutoAwesomeIcon />
+            </button>
+          </div>
         </div>
         {error && (
           <div className="mb-6 text-red-500">

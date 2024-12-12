@@ -114,13 +114,13 @@ const PasswordList: React.FC = () => {
       {/* Refresh the password list after adding a new password */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false) } className="relative z-50">
         <DialogBackdrop className="fixed inset-0 bg-gray-500 bg-opacity-50" aria-hidden="true" />
-        <DialogPanel className="fixed inset-0 h-1/2 w-2/5 m-auto md-shadow">
+        <DialogPanel className="fixed inset-0 h-1/2 w-3/4 m-auto md-shadow">
           <AddPassword setOpen={setAddOpen} />
         </DialogPanel>
       </Dialog>
       <Dialog open={viewOpen} onClose={() => setViewOpen(false) } className="relative z-50">
         <DialogBackdrop className="fixed inset-0 bg-gray-500 bg-opacity-50" aria-hidden="true" />
-        <DialogPanel className="fixed inset-0 h-1/2 w-2/5 m-auto md-shadow">
+        <DialogPanel className="fixed inset-0 h-1/2 w-3/4 m-auto md-shadow">
           <ViewPassword id={viewId!} setOpen={setViewOpen}/>
         </DialogPanel>
       </Dialog>

@@ -32,7 +32,7 @@ const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Navbar />
-      <div className="py-8 px-4 mt-8 mb-8">
+      <div className="py-12 px-4 mt-8 mb-8">
         <Routes>
           <Route
             path="/"
