@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { login } from '../../services/api';
-import { deriveMasterKey, hashMasterPassword, ab2base64, base642uint8, deriveKeyHKDF } from '../../services/crypto';
+import { deriveMasterKey, hashMasterPassword, ab2base64, base642uint8, deriveKeyHKDF, deriveHMACKey } from '../../services/crypto';
 import { AuthContext } from '../../context/AuthContext';
 
 const Login: React.FC = () => {
-  const { setToken, setMasterKey, setMetadataKey } = useContext(AuthContext);
+  const { setToken, setMasterKey, setMetadataKey, setHmacKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +24,7 @@ const Login: React.FC = () => {
       if (response.status === 200) {
         const { token, masterSalt } = response.data;
         setToken(token);
+        setUser(username);
 
         // Convert master salt to Uint8Array
         const masterSaltBytes = base642uint8(masterSalt);
@@ -33,9 +34,17 @@ const Login: React.FC = () => {
         
         // Derive metadata key
         const metadataKey = await deriveKeyHKDF(masterKey, masterSaltBytes, 'metadata');
+
+        // Derive HMAC key
+        const hmacKey = await deriveHMACKey(masterKey, masterSaltBytes, 'service-username-hash');
+
+        // Derive integrity HMAC key
+        const integrityHmacKey = await deriveHMACKey(masterKey, masterSaltBytes, 'integrity-hmac');
         
         setMasterKey(masterKey);
         setMetadataKey(metadataKey);
+        setHmacKey(hmacKey);
+        setIntegrityHmacKey(integrityHmacKey);
       } else {
         setError('Login failed. Please check your credentials.');
       }

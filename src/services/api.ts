@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = process.env.PWMGR_API_URL;
 
 const api = axios.create({
-  baseURL: API_BASE_URL || '/api',
+  baseURL: API_BASE_URL || 'http://localhost:5233/api',
 });
 
 // Add interceptor to include JWT token

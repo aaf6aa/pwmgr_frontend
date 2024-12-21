@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
 const Navbar: React.FC = () => {
-  const { token, logout } = useContext(AuthContext);
+  const { token, user, logout } = useContext(AuthContext);
 
   return (
     <nav className="bg-amber-400 p-4 w-full flex justify-between fixed top-0 z-10 shadow-sm backdrop-filter backdrop-blur-lg bg-opacity-45">
@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
           <Link to="/passwords" className="mr-auto text-yellow-700 hover:text-black drop-shadow">
             Passwords
           </Link>
+          <div className="text-amber-900">Hi, {user}</div>
           <button onClick={logout} className="ml-auto text-yellow-700 hover:text-black drop-shadow">
             Logout
           </button>

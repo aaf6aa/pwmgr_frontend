@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { register } from '../../services/api';
-import { deriveMasterKey, deriveKeyHKDF, generateSalt, hashMasterPassword, ab2base64, uint82base64 } from '../../services/crypto';
+import { deriveMasterKey, deriveKeyHKDF, generateSalt, hashMasterPassword, ab2base64, uint82base64, deriveHMACKey } from '../../services/crypto';
 import { AuthContext } from '../../context/AuthContext';
 
 const Register: React.FC = () => {
-  const { setToken, setMasterKey, setMetadataKey } = useContext(AuthContext);
+  const { setToken, setMasterKey, setMetadataKey, setHmacKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,6 +32,12 @@ const Register: React.FC = () => {
       // Derive metadata key
       const metadataKey = await deriveKeyHKDF(masterKey, masterSalt, 'metadata');
 
+      // Derive hmac key
+      const hmacKey = await deriveHMACKey(masterKey, masterSalt, 'service-username-hash');
+
+      // Derive integrity hmac key
+      const integrityHmacKey = await deriveHMACKey(masterKey, masterSalt, 'integrity-hmac');
+
       // Hash the master password before sending
       const passwordHash = ab2base64(await hashMasterPassword(password, username));
 
@@ -39,8 +45,11 @@ const Register: React.FC = () => {
       const response = await register(username, passwordHash, uint82base64(masterSalt));
       if (response.status === 201 || response.status === 200) {
         setToken(response.data.token);
+        setUser(username);
         setMasterKey(masterKey);
         setMetadataKey(metadataKey);
+        setHmacKey(hmacKey);
+        setIntegrityHmacKey(integrityHmacKey);
       } else {
         setError('Registration failed. Please try again.');
       }

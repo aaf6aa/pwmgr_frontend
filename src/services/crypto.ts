@@ -1,7 +1,7 @@
 // Helper to convert string to ArrayBuffer
 export const str2ab = (str: string): ArrayBuffer => {
   const encoder = new TextEncoder();
-  return encoder.encode(str);
+  return new Uint8Array(encoder.encode(str)).buffer;
 };
 
 // Helper to convert ArrayBuffer to string
@@ -128,6 +128,47 @@ export const deriveKeyHKDF = async (
   );
 };
 
+// Derive HMAC key from master key using HKDF
+export const deriveHMACKey = async (
+  masterKey: CryptoKey,
+  salt: Uint8Array,
+  info: string
+): Promise<CryptoKey> => {
+  return window.crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: salt,
+      info: str2ab(info),
+    },
+    masterKey,
+    { name: 'HMAC', hash: 'SHA-256', length: 256 },
+    false,
+    ['sign', 'verify']
+  );
+};
+
+// Compute HMAC using the derived HMAC key
+export const computeHMAC = async (
+  hmacKey: CryptoKey,
+  message: string
+): Promise<ArrayBuffer> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  return window.crypto.subtle.sign('HMAC', hmacKey, data);
+};
+
+// Verify HMAC using the derived HMAC key
+export const verifyHMAC = async (
+  hmacKey: CryptoKey,
+  message: string,
+  signature: ArrayBuffer
+): Promise<boolean> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  return window.crypto.subtle.verify('HMAC', hmacKey, signature, data);
+};
+
 const AES_GCM_IV_LENGTH = 12;
 
 // AES-GCM encryption
@@ -172,4 +213,27 @@ export const decryptAESGCM = async (
 // Generate random salt
 export const generateSalt = (): Uint8Array => {
   return window.crypto.getRandomValues(new Uint8Array(16));
+};
+
+export const calculatePasswordStrength = (password: string): { color: string; strength: string } => {
+  let strength = 0;
+
+  // Check for character diversity
+  if (/[a-z]/.test(password)) strength++; // Lowercase
+  if (/[A-Z]/.test(password)) strength++; // Uppercase
+  if (/\d/.test(password)) strength++;    // Numbers
+  if (/[@#$%^&*!_+|~=`{}[\]:;"'<>,.?/]/.test(password)) strength++; // Special characters
+
+  // Check for length
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+
+  // Determine color and description
+  if (strength <= 3) {
+    return { color: '#f4511e', strength: 'Weak' };
+  } else if (strength <= 5) {
+    return { color: '#fdd835', strength: 'Moderate' };
+  } else {
+    return { color: '#7cb342', strength: 'Strong' };
+  }
 };

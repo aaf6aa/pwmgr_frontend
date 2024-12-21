@@ -1,14 +1,16 @@
 import React, { useState, useContext, Dispatch, SetStateAction } from 'react';
 import { addEncryptedPassword } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
-import { ab2base64, deriveKeyHKDF, encryptAESGCM, generateSalt, str2ab } from '../../services/crypto';
+import { ab2base64, calculatePasswordStrength, computeHMAC, deriveKeyHKDF, encryptAESGCM, generateSalt, str2ab } from '../../services/crypto';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import Tooltip from '@mui/material/Tooltip';
 
 const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({ setOpen }) => {
-  const { masterKey, metadataKey, passwords } = useContext(AuthContext);
+  const { masterKey, metadataKey, hmacKey, integrityHmacKey, passwords, user } = useContext(AuthContext);
   const [service, setService] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -33,7 +35,10 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
     setError(null);
     setDisable(true);
     try {
-      const metadataInfo = JSON.stringify({ service, username });
+      // Get the current timestamp
+      const timestamp = new Date().toISOString();
+
+      const metadataInfo = JSON.stringify({ service, username, timestamp });
 
       // Generate random key for password encryption
       const passwordKey = window.crypto.getRandomValues(new Uint8Array(32));
@@ -53,36 +58,51 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
       const kek = await deriveKeyHKDF(masterKey!, hkdfSalt, metadataInfo);
 
       // Encrypt the password key with KEK
-      const encryptedPasswordKey = await encryptAESGCM(kek, passwordKey);
+      const encryptedPasswordKey = await encryptAESGCM(kek, passwordKey.buffer);
 
       // Encrypt metadata
       const encryptedMetadata = await encryptAESGCM(metadataKey!, str2ab(metadataInfo));
+
+      // Generate ServiceUsernameHash using HMAC
+      const appUsername = user?.toLowerCase(); // Get the authenticated user's username
+      const hashInput = `${service.toLowerCase()}${username.toLowerCase()}${appUsername}`;
+      const serviceUsernameHash = ab2base64(await computeHMAC(hmacKey!, hashInput)); // Compute HMAC and encode as Base64
 
       // Prepare payload
       const payload = {
         encryptedMetadata: ab2base64(encryptedMetadata),
         encryptedPassword: ab2base64(encryptedPassword),
         encryptedPasswordKey: ab2base64(encryptedPasswordKey),
-        hkdfSalt: ab2base64(hkdfSalt),
+        hkdfSalt: ab2base64(new Uint8Array(hkdfSalt).buffer),
+        serviceUsernameHash: serviceUsernameHash, // Base64-encoded HMAC
       };
 
+      // Compute HMAC of the payload
+      const payloadString = JSON.stringify(payload);
+      const payloadHmac = ab2base64(await computeHMAC(integrityHmacKey!, payloadString));
+
       // Send to server
-      const addResponse = await addEncryptedPassword(payload);
+      const addResponse = await addEncryptedPassword({ ...payload, hmac: payloadHmac });
       if (addResponse.status !== 201) {
         throw new Error('Failed to add password');
       }
 
       // Update local state
       const { id } = addResponse.data;
-      passwords.set(id, { id, service, username });
-
-      
+      passwords.set(id, { id, service, username, timestamp });
     } catch (error: any) {
-      console.error('Failed to add password', error);
-      setError('Failed to add password. Please try again.');
+      if (error.response?.status === 409) {
+        setError('An entry with the same service and username already exists.');
+      } else {
+        console.error('Failed to add password', error);
+        setError('Failed to add password. Please try again.');
+      }
       setDisable(false);
     }
   };
+
+  // Analyze password strength
+  const { color, strength } = calculatePasswordStrength(password);
 
   return (
     <div className="max-w-md mx-auto p-10 bg-white shadow-md rounded-xl">
@@ -128,6 +148,15 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
             >
               <AutoAwesomeIcon />
             </button>
+            <Tooltip title={`Password strength: ${strength}`} arrow>
+              <button
+                type="button"
+                disabled={disable}
+                className="text-gray-500"
+              >
+                <AssessmentIcon style={{ color }} />
+              </button>
+            </Tooltip>
           </div>
         </div>
         {error && (
