@@ -68,7 +68,7 @@ const NoteList: React.FC = () => {
     if (token && metadataKey) {
       fetchMetadata();
     }
-  }, [token, metadataKey]);
+  }, [token, metadataKey, notes]);
 
   // Sort notes based on the selected column and order
   const sortedNotes = Array.from(notes.values()).sort((a, b) => {
