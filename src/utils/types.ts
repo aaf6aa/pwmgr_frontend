@@ -4,3 +4,10 @@ export interface PasswordMetadata {
   username: string;
   timestamp: string;
 }
+
+export interface NoteMetadata {
+  id: string;
+  title: string;
+  timestamp: string;
+  lastModified: string;
+}

@@ -5,6 +5,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import Register from './components/Auth/Register';
 import Login from './components/Auth/Login';
 import PasswordList from './components/Password/PasswordList';
+import NoteList from './components/Note/NoteList';
 import Navbar from './components/common/Navbar';
 import { setAuthToken } from './services/api';
 import { useIdleTimer } from "react-idle-timer";
@@ -49,6 +50,10 @@ const AppRoutes: React.FC = () => {
           <Route
             path="/passwords"
             element={token ? <PasswordList /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/notes"
+            element={token ? <NoteList /> : <Navigate to="/login" />}
           />
           <Route path="*" element={<div className="p-6">404 Not Found</div>} />
         </Routes>

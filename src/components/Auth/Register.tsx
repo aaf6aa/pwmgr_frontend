@@ -4,7 +4,7 @@ import { deriveMasterKey, deriveKeyHKDF, generateSalt, hashMasterPassword, ab2ba
 import { AuthContext } from '../../context/AuthContext';
 
 const Register: React.FC = () => {
-  const { setToken, setMasterKey, setMetadataKey, setHmacKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
+  const { setToken, setMasterKey, setMetadataKey, setDeduplicationKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,10 +32,10 @@ const Register: React.FC = () => {
       // Derive metadata key
       const metadataKey = await deriveKeyHKDF(masterKey, masterSalt, 'metadata');
 
-      // Derive hmac key
-      const hmacKey = await deriveHMACKey(masterKey, masterSalt, 'service-username-hash');
+      // Derive deduplication HMAC key
+      const deduplicationKey = await deriveHMACKey(masterKey, masterSalt, 'deduplication-hmac');
 
-      // Derive integrity hmac key
+      // Derive integrity HMAC key
       const integrityHmacKey = await deriveHMACKey(masterKey, masterSalt, 'integrity-hmac');
 
       // Hash the master password before sending
@@ -48,7 +48,7 @@ const Register: React.FC = () => {
         setUser(username);
         setMasterKey(masterKey);
         setMetadataKey(metadataKey);
-        setHmacKey(hmacKey);
+        setDeduplicationKey(deduplicationKey);
         setIntegrityHmacKey(integrityHmacKey);
       } else {
         setError('Registration failed. Please try again.');

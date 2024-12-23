@@ -4,7 +4,7 @@ import { deriveMasterKey, hashMasterPassword, ab2base64, base642uint8, deriveKey
 import { AuthContext } from '../../context/AuthContext';
 
 const Login: React.FC = () => {
-  const { setToken, setMasterKey, setMetadataKey, setHmacKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
+  const { setToken, setMasterKey, setMetadataKey, setDeduplicationKey, setIntegrityHmacKey, setUser } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +35,15 @@ const Login: React.FC = () => {
         // Derive metadata key
         const metadataKey = await deriveKeyHKDF(masterKey, masterSaltBytes, 'metadata');
 
-        // Derive HMAC key
-        const hmacKey = await deriveHMACKey(masterKey, masterSaltBytes, 'service-username-hash');
+        // Derive deduplication HMAC key
+        const deduplicationKey = await deriveHMACKey(masterKey, masterSaltBytes, 'deduplication-hmac');
 
         // Derive integrity HMAC key
         const integrityHmacKey = await deriveHMACKey(masterKey, masterSaltBytes, 'integrity-hmac');
         
         setMasterKey(masterKey);
         setMetadataKey(metadataKey);
-        setHmacKey(hmacKey);
+        setDeduplicationKey(deduplicationKey);
         setIntegrityHmacKey(integrityHmacKey);
       } else {
         setError('Login failed. Please check your credentials.');

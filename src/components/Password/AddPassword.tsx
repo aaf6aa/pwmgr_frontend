@@ -10,7 +10,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import Tooltip from '@mui/material/Tooltip';
 
 const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({ setOpen }) => {
-  const { masterKey, metadataKey, hmacKey, integrityHmacKey, passwords, user } = useContext(AuthContext);
+  const { masterKey, metadataKey, deduplicationKey, integrityHmacKey, passwords, user } = useContext(AuthContext);
   const [service, setService] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -63,10 +63,9 @@ const AddPassword: React.FC<{ setOpen: Dispatch<SetStateAction<boolean>> }> = ({
       // Encrypt metadata
       const encryptedMetadata = await encryptAESGCM(metadataKey!, str2ab(metadataInfo));
 
-      // Generate ServiceUsernameHash using HMAC
-      const appUsername = user?.toLowerCase(); // Get the authenticated user's username
-      const hashInput = `${service.toLowerCase()}${username.toLowerCase()}${appUsername}`;
-      const serviceUsernameHash = ab2base64(await computeHMAC(hmacKey!, hashInput)); // Compute HMAC and encode as Base64
+      // Generate unique service-username hash using HMAC
+      const hashInput = `${service.toLowerCase()}${username.toLowerCase()}${user?.toLowerCase()}`;
+      const serviceUsernameHash = ab2base64(await computeHMAC(deduplicationKey!, hashInput)); // Compute HMAC and encode as Base64
 
       // Prepare payload
       const payload = {
